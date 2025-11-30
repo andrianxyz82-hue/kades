@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_gradients.dart';
 
@@ -28,8 +29,7 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
     'Receipts',
   ];
 
-import 'package:permission_handler/permission_handler.dart';
-
+  
   Future<void> _takePhoto() async {
     final status = await Permission.camera.request();
     if (status.isGranted) {
