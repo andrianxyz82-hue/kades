@@ -5,7 +5,13 @@ import 'screens/home_dashboard_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'screens/splash_screen.dart';
 
+import 'package:flutter/services.dart';
+
 void main() {
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
   runApp(const SmartFileStorageApp());
 }
 

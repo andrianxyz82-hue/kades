@@ -28,10 +28,21 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
     'Receipts',
   ];
 
-  void _takePhoto() {
-    setState(() {
-      _currentStep = 1;
-    });
+import 'package:permission_handler/permission_handler.dart';
+
+  Future<void> _takePhoto() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      setState(() {
+        _currentStep = 1;
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Camera permission is required')),
+        );
+      }
+    }
   }
 
   void _retakePhoto() {

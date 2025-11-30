@@ -9,6 +9,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        height: double.infinity, // Ensure full height
         decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
         ),
