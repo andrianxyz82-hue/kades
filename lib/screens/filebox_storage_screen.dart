@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_file/open_file.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_colors.dart';
 import '../models/folder_model.dart';
 import '../models/file_model.dart';
@@ -241,31 +242,32 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
     try {
       File? file;
       String? fileName;
+      List<int>? fileBytes;
 
       if (type == 'photo') {
         final picker = ImagePicker();
         final pickedFile = await picker.pickImage(source: ImageSource.gallery);
         if (pickedFile != null) {
-          file = File(pickedFile.path);
           fileName = pickedFile.name;
+          fileBytes = await pickedFile.readAsBytes();
         }
       } else if (type == 'video') {
         final picker = ImagePicker();
         final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
         if (pickedFile != null) {
-          file = File(pickedFile.path);
           fileName = pickedFile.name;
+          fileBytes = await pickedFile.readAsBytes();
         }
       } else {
         // Document
         final result = await FilePicker.platform.pickFiles();
-        if (result != null && result.files.single.path != null) {
-          file = File(result.files.single.path!);
+        if (result != null) {
           fileName = result.files.single.name;
+          fileBytes = result.files.single.bytes;
         }
       }
 
-      if (file != null && fileName != null) {
+      if (fileBytes != null && fileName != null) {
         // Show loading
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -275,21 +277,29 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
 
         // Upload to Supabase Storage
         final userId = Supabase.instance.client.auth.currentUser!.id;
-        final storagePath = await _storageService.uploadFile(
-          file: file,
-          userId: userId,
-          folderId: widget.parentFolderId,
-        );
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        
+        // Create storage path
+        String storagePath;
+        if (widget.parentFolderId != null) {
+          storagePath = '$userId/${widget.parentFolderId}/${timestamp}_$fileName';
+        } else {
+          storagePath = '$userId/${timestamp}_$fileName';
+        }
+
+        // Upload using bytes (web-compatible)
+        await Supabase.instance.client.storage
+            .from('filebox')
+            .uploadBinary(storagePath, fileBytes);
 
         // Save metadata to database
-        final fileSize = await file.length();
         final fileType = _storageService.getFileType(fileName);
         
         await _fileService.saveFile(
           name: fileName,
           storagePath: storagePath,
           fileType: fileType,
-          fileSize: fileSize,
+          fileSize: fileBytes.length,
           folderId: widget.parentFolderId,
         );
 
@@ -336,6 +346,15 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.create_new_folder, color: AppColors.iconBlue),
+              title: const Text('Create Folder'),
+              onTap: () {
+                Navigator.pop(context);
+                _createFolder();
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.photo, color: AppColors.iconYellow),
               title: const Text('Upload Photo'),
@@ -399,33 +418,24 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: _createFolder,
-                          icon: const Icon(Icons.create_new_folder),
-                          color: AppColors.blueGradientEnd,
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfileScreen(),
-                              ),
-                            );
-                          },
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppColors.blueGradientEnd,
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
                           ),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.blueGradientEnd,
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
