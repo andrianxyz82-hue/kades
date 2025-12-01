@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
 import 'home_dashboard_screen.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -31,13 +34,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigation timer
+    // Navigation timer with auth check
     Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomeDashboardScreen(),
-        ),
-      );
+      if (mounted) {
+        final destination = _authService.isLoggedIn
+            ? const HomeDashboardScreen()
+            : const LoginScreen();
+        
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      }
     });
   }
 
