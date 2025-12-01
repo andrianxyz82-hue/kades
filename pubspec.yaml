@@ -1,6 +1,7 @@
 name: smart_file_storage
 description: A modern Smart File Storage & Cloud Manager app with neumorphism design
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
@@ -9,12 +10,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # UI / Fonts
   cupertino_icons: ^1.0.2
   google_fonts: ^6.1.0
+
+  # Permissions
   permission_handler: ^12.0.1
+
+  # File system utilities
   path_provider: ^2.1.5
   file_manager: ^1.0.2
-  open_file_plus: ^3.4.1+1
+
+  # FIXED → Updated to latest working version
+  open_file_plus: ^3.6.0
 
 dev_dependencies:
   flutter_test:
@@ -23,5 +32,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/
