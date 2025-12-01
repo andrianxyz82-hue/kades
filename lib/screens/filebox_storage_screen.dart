@@ -11,6 +11,8 @@ import '../models/file_model.dart';
 import '../services/folder_service.dart';
 import '../services/file_service.dart';
 import '../services/storage_service.dart';
+import 'package:smart_file_storage/screens/file_preview_screen.dart';
+import 'package:smart_file_storage/services/cache_service.dart';
 import 'profile_screen.dart';
 
 class FileBoxStorageScreen extends StatefulWidget {
@@ -65,9 +67,16 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> with Single
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
+    final cacheService = CacheService();
+    
     try {
+      // Try to fetch from network
       final folders = await _folderService.getFolders(parentId: widget.parentFolderId);
       final files = await _fileService.getFiles(folderId: widget.parentFolderId);
+      
+      // Save to cache
+      await cacheService.saveFolders(folders);
+      await cacheService.saveFiles(files);
       
       // Calculate storage usage
       int usedBytes = 0;
@@ -83,11 +92,35 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> with Single
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
-        );
+      // If network fails, try cache
+      print('Network error, loading from cache: $e');
+      try {
+        final cachedFolders = await cacheService.getCachedFolders();
+        final cachedFiles = await cacheService.getCachedFiles();
+        
+        // Filter cache for current folder (basic implementation)
+        // Note: Ideally cache should be structured by folderId or filtered here
+        final currentFolders = cachedFolders.where((f) => f.parentId == widget.parentFolderId).toList();
+        final currentFiles = cachedFiles.where((f) => f.folderId == widget.parentFolderId).toList();
+
+        setState(() {
+          _folders = currentFolders;
+          _files = currentFiles;
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Offline mode: Showing cached data')),
+          );
+        }
+      } catch (cacheError) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading data: $e')),
+          );
+        }
       }
     }
   }
@@ -369,16 +402,12 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> with Single
   }
 
   Future<void> _openFile(FileModel file) async {
-    try {
-      final url = await _storageService.getFileUrl(file.storagePath);
-      await OpenFile.open(url);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening file: $e')),
-        );
-      }
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FilePreviewScreen(file: file),
+      ),
+    );
   }
 
   void _showUploadOptions() {
