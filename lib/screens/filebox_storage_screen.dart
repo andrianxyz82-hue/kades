@@ -274,7 +274,7 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
         }
 
         // Upload to Supabase Storage
-        final userId = await _folderService._supabase.auth.currentUser!.id;
+        final userId = Supabase.instance.client.auth.currentUser!.id;
         final storagePath = await _storageService.uploadFile(
           file: file,
           userId: userId,
