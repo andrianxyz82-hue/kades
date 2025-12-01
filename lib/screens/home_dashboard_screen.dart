@@ -1,26 +1,3 @@
-import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../widgets/storage_card.dart';
-import '../widgets/category_item.dart';
-import 'file_manager_screen.dart';
-import 'profile_screen.dart';
-import 'filebox_storage_screen.dart';
-import 'gdrive_storage_screen.dart';
-import 'internal_storage_screen.dart';
-import 'package:smart_file_storage/screens/filebox_storage_screen.dart';
-import 'camera_save_screen.dart';
-import '../theme/app_gradients.dart';
-
-class HomeDashboardScreen extends StatelessWidget {
-  const HomeDashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true, // Important for floating effect
-      backgroundColor: AppColors.backgroundGradient.colors.first, // Fix dark area
-      body: Container(
-        decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
         ),
         child: SafeArea(
@@ -165,31 +142,56 @@ class HomeDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 16), // Reduced spacing
                 
                 // Category Grid
+                // Category Grid
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: const [
-                    CategoryItem(
-                      icon: Icons.image,
-                      label: 'Picture',
-                      iconColor: AppColors.iconYellow,
-                    ),
-                    CategoryItem(
-                      icon: Icons.videocam,
-                      label: 'Video',
-                      iconColor: AppColors.iconRed,
-                    ),
-                    CategoryItem(
-                      icon: Icons.description,
-                      label: 'My File',
-                      iconColor: AppColors.iconYellow,
-                    ),
-                    CategoryItem(
-                      icon: Icons.apps,
-                      label: 'Apps',
-                      iconColor: AppColors.iconBlue,
-                    ),
+                  children: [
+                    _buildCategoryItem(Icons.image, 'Picture', AppColors.iconYellow, 'photo'),
+                    _buildCategoryItem(Icons.videocam, 'Video', AppColors.iconRed, 'video'),
+                    _buildCategoryItem(Icons.description, 'My File', AppColors.iconYellow, 'document'),
+                    _buildCategoryItem(Icons.apps, 'Apps', AppColors.iconBlue, 'app'),
                   ],
                 ),
+                
+                const SizedBox(height: 24),
+                
+                // Recent Files List (Filtered)
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (_recentFiles.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text('No files found in this category'),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _recentFiles.length,
+                    itemBuilder: (context, index) {
+                      final file = _recentFiles[index];
+                      return ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(file.icon, color: AppColors.blueGradientEnd),
+                        ),
+                        title: Text(
+                          file.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(file.formattedSize),
+                        trailing: const Icon(Icons.more_vert, size: 20),
+                      );
+                    },
+                  ),
               ],
             ),
           ),
