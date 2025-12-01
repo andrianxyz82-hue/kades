@@ -17,6 +17,7 @@ class HomeDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true, // Important for floating effect
+      backgroundColor: AppColors.backgroundGradient.colors.first, // Fix dark area
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
@@ -24,7 +25,7 @@ class HomeDashboardScreen extends StatelessWidget {
         child: SafeArea(
           bottom: false, // Allow content to go behind bottom nav
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 60, 24, 100), // Top padding increased, bottom for nav
+            padding: const EdgeInsets.fromLTRB(24, 40, 24, 120), // Reduced top padding, increased bottom
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -45,7 +46,7 @@ class HomeDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4), // Reduced spacing
                 const Text(
                   "aplikasi databse internal komunitas penggiat alam kareumbi",
                   style: TextStyle(
@@ -53,7 +54,7 @@ class HomeDashboardScreen extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24), // Reduced spacing
                 
                 // Storage Cards
                 SizedBox(
@@ -128,7 +129,7 @@ class HomeDashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24), // Reduced spacing
                 
                 // Categories Section
                 Row(
@@ -160,7 +161,7 @@ class HomeDashboardScreen extends StatelessWidget {
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16), // Reduced spacing
                 
                 // Category Grid
                 Row(
@@ -194,14 +195,14 @@ class HomeDashboardScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(24),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        margin: const EdgeInsets.fromLTRB(24, 0, 24, 24), // Added bottom margin
+        padding: const EdgeInsets.symmetric(vertical: 12), // Reduced vertical padding
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(30), // Rounded corners
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

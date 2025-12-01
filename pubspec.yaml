@@ -24,6 +24,7 @@ dependencies:
 
   # REPLACEMENT FOR open_file_plus (compatible & stable)
   open_file: ^3.3.2
+  camera: ^0.11.3
 
 dev_dependencies:
   flutter_test:

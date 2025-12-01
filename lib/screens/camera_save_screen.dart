@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_colors.dart';
@@ -10,10 +12,15 @@ class CameraSaveScreen extends StatefulWidget {
   State<CameraSaveScreen> createState() => _CameraSaveScreenState();
 }
 
-class _CameraSaveScreenState extends State<CameraSaveScreen> {
+class _CameraSaveScreenState extends State<CameraSaveScreen> with WidgetsBindingObserver {
   int _currentStep = 0; // 0: Capture, 1: Preview, 2: Select Storage, 3: Select Folder
   String? _selectedStorage;
   String? _selectedFolder;
+  
+  CameraController? _controller;
+  List<CameraDescription>? _cameras;
+  XFile? _capturedImage;
+  bool _isCameraInitialized = false;
 
   final List<Map<String, dynamic>> _storageOptions = [
     {'name': 'File Box', 'icon': Icons.folder, 'color': AppColors.blueGradientEnd},
@@ -29,13 +36,69 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
     'Receipts',
   ];
 
-  
-  Future<void> _takePhoto() async {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeCamera();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = _controller;
+
+    // App state changed before we got the chance to initialize.
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      cameraController.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _initializeCamera();
+    }
+  }
+
+  Future<void> _initializeCamera() async {
     final status = await Permission.camera.request();
     if (status.isGranted) {
-      setState(() {
-        _currentStep = 1;
-      });
+      try {
+        _cameras = await availableCameras();
+        if (_cameras != null && _cameras!.isNotEmpty) {
+          // Use the first camera (usually back camera)
+          _controller = CameraController(
+            _cameras![0],
+            ResolutionPreset.high,
+            enableAudio: false,
+          );
+
+          await _controller!.initialize();
+          if (mounted) {
+            setState(() {
+              _isCameraInitialized = true;
+            });
+          }
+        } else {
+           if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No cameras found')),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error initializing camera: $e')),
+          );
+        }
+      }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -45,9 +108,26 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
     }
   }
 
+  Future<void> _takePhoto() async {
+    if (!_isCameraInitialized || _controller == null) return;
+
+    try {
+      final XFile image = await _controller!.takePicture();
+      setState(() {
+        _capturedImage = image;
+        _currentStep = 1;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error taking picture: $e')),
+      );
+    }
+  }
+
   void _retakePhoto() {
     setState(() {
       _currentStep = 0;
+      _capturedImage = null;
       _selectedStorage = null;
       _selectedFolder = null;
     });
@@ -81,10 +161,12 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
     );
     // Simulate upload delay then close
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload Successful!')),
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Upload Successful!')),
+        );
+      }
     });
   }
 
@@ -159,6 +241,12 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
   }
 
   Widget _buildCaptureView() {
+    if (!_isCameraInitialized || _controller == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.blueGradientEnd),
+      );
+    }
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -166,12 +254,13 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
           child: Container(
             margin: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[800],
+              color: Colors.black,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            child: const Center(
-              child: Icon(Icons.camera_alt, size: 64, color: Colors.white54),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: CameraPreview(_controller!),
             ),
           ),
         ),
@@ -209,17 +298,16 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> {
             decoration: BoxDecoration(
               color: Colors.grey[800],
               borderRadius: BorderRadius.circular(20),
-              image: const DecorationImage(
-                image: AssetImage('assets/images/placeholder_image.jpg'), // Placeholder
-                fit: BoxFit.cover,
-              ),
+              image: _capturedImage != null
+                  ? DecorationImage(
+                      image: FileImage(File(_capturedImage!.path)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Center(
-              child: Text(
-                'Photo Preview',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+            child: _capturedImage == null
+                ? const Center(child: Text('No image captured', style: TextStyle(color: Colors.white)))
+                : null,
           ),
         ),
         Padding(
