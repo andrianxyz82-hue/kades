@@ -1,3 +1,110 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:smart_file_storage/models/file_model.dart';
+import 'package:smart_file_storage/services/file_service.dart';
+import 'package:smart_file_storage/theme/app_colors.dart';
+import 'package:smart_file_storage/screens/filebox_storage_screen.dart';
+import 'package:smart_file_storage/screens/gdrive_storage_screen.dart';
+import 'package:smart_file_storage/screens/internal_storage_screen.dart';
+import 'package:smart_file_storage/screens/camera_save_screen.dart';
+import 'package:smart_file_storage/screens/profile_screen.dart';
+import '../theme/app_gradients.dart';
+import '../widgets/storage_card.dart';
+import '../widgets/category_item.dart';
+
+class HomeDashboardScreen extends StatefulWidget {
+  const HomeDashboardScreen({super.key});
+
+  @override
+  State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+  final _fileService = FileService();
+  List<FileModel> _recentFiles = [];
+  bool _isLoading = false;
+  String _selectedCategory = 'photo'; // Default category
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentFiles();
+  }
+
+  Future<void> _loadRecentFiles() async {
+    setState(() => _isLoading = true);
+    try {
+      // Fetch all files then filter locally for now (can be optimized to filter in query)
+      final files = await _fileService.getFiles();
+      
+      setState(() {
+        _recentFiles = files.where((file) {
+          if (_selectedCategory == 'photo') return file.fileType == 'photo';
+          if (_selectedCategory == 'video') return file.fileType == 'video';
+          if (_selectedCategory == 'document') return file.fileType == 'document';
+          return true;
+        }).take(5).toList(); // Take top 5 recent
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print('Error loading files: $e');
+    }
+  }
+
+  Widget _buildCategoryItem(IconData icon, String label, Color iconColor, String categoryKey) {
+    final isSelected = _selectedCategory == categoryKey;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = categoryKey;
+        });
+        _loadRecentFiles();
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.blueGradientEnd.withOpacity(0.1) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: isSelected ? Border.all(color: AppColors.blueGradientEnd, width: 2) : null,
+              boxShadow: isSelected ? [] : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppColors.blueGradientEnd : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBody: true, // Important for floating effect
+      backgroundColor: AppColors.backgroundGradient.colors.first, // Fix dark area
+      body: Container(
+        decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
         ),
         child: SafeArea(
@@ -142,7 +249,6 @@
                 const SizedBox(height: 16), // Reduced spacing
                 
                 // Category Grid
-                // Category Grid
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -217,7 +323,7 @@
             _buildNavItem(context, Icons.explore, 'Explore', true),
             _buildNavItem(context, Icons.folder_open, 'Files', false),
             
-            // Quick Camera Button
+            // Floating Action Button (Center)
             GestureDetector(
               onTap: () {
                 Navigator.push(
