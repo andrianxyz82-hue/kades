@@ -27,7 +27,7 @@ class FileBoxStorageScreen extends StatefulWidget {
   State<FileBoxStorageScreen> createState() => _FileBoxStorageScreenState();
 }
 
-class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
+class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> with SingleTickerProviderStateMixin {
   final _folderService = FolderService();
   final _fileService = FileService();
   final _storageService = StorageService();
@@ -35,11 +35,32 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
   List<FolderModel> _folders = [];
   List<FileModel> _files = [];
   bool _isLoading = true;
+  bool _isExpanded = false;
+  int _totalStorageBytes = 0;
+  int _usedStorageBytes = 0;
+  
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    _animationController.forward(); // Start with card visible
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -48,9 +69,17 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
       final folders = await _folderService.getFolders(parentId: widget.parentFolderId);
       final files = await _fileService.getFiles(folderId: widget.parentFolderId);
       
+      // Calculate storage usage
+      int usedBytes = 0;
+      for (var file in files) {
+        usedBytes += file.fileSize;
+      }
+      
       setState(() {
         _folders = folders;
         _files = files;
+        _usedStorageBytes = usedBytes;
+        _totalStorageBytes = 80 * 1024 * 1024 * 1024; // 80 GB
         _isLoading = false;
       });
     } catch (e) {
@@ -61,6 +90,24 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
         );
       }
     }
+  }
+
+  void _toggleView() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.reverse();
+      } else {
+        _animationController.forward();
+      }
+    });
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
   Future<void> _createFolder() async {
