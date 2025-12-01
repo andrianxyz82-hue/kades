@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -290,7 +291,7 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
         // Upload using bytes (web-compatible)
         await Supabase.instance.client.storage
             .from('filebox')
-            .uploadBinary(storagePath, fileBytes);
+            .uploadBinary(storagePath, Uint8List.fromList(fileBytes));
 
         // Save metadata to database
         final fileType = _storageService.getFileType(fileName);
