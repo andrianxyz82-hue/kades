@@ -450,6 +450,171 @@ class _FileBoxStorageScreenState extends State<FileBoxStorageScreen> {
                         child: ListView(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           children: [
+                            // Storage Card (animated)
+                            if (!_isExpanded)
+                              FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 24),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.blueGradient,
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.blueGradientEnd.withOpacity(0.3),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white.withOpacity(0.3),
+                                                    borderRadius: BorderRadius.circular(15),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.folder,
+                                                    color: Colors.white,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                const Text(
+                                                  'File Box Storage',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 20),
+                                        
+                                        // Progress Bar
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _formatBytes(_usedStorageBytes),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            Text(
+                                              _formatBytes(_totalStorageBytes),
+                                              style: TextStyle(
+                                                color: Colors.white.withOpacity(0.7),
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: LinearProgressIndicator(
+                                            value: _totalStorageBytes > 0 
+                                                ? _usedStorageBytes / _totalStorageBytes 
+                                                : 0,
+                                            backgroundColor: Colors.white.withOpacity(0.3),
+                                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                            minHeight: 8,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        
+                                        // Clean Button
+                                        GestureDetector(
+                                          onTap: () {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Clean storage feature coming soon!'),
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(25),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: const [
+                                                Text(
+                                                  'Clean Storage',
+                                                  style: TextStyle(
+                                                    color: AppColors.blueGradientEnd,
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                Icon(
+                                                  Icons.cleaning_services,
+                                                  color: AppColors.blueGradientEnd,
+                                                  size: 18,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            
+                            // Section Header with View Toggle
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Supabase Files',
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _toggleView,
+                                  child: Text(
+                                    _isExpanded ? 'Back' : 'View All',
+                                    style: const TextStyle(
+                                      color: AppColors.blueGradientEnd,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Total ${_files.length} files',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
                             if (_folders.isEmpty && _files.isEmpty)
                               const Center(
                                 child: Padding(
