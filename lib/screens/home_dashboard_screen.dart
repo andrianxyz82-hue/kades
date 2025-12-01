@@ -7,6 +7,7 @@ import 'profile_screen.dart';
 import 'filebox_storage_screen.dart';
 import 'gdrive_storage_screen.dart';
 import 'internal_storage_screen.dart';
+import 'package:smart_file_storage/screens/filebox_storage_screen.dart';
 import 'camera_save_screen.dart';
 import '../theme/app_gradients.dart';
 
@@ -260,7 +261,7 @@ class HomeDashboardScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const FileManagerScreen(),
+              builder: (context) => const FileBoxStorageScreen(),
             ),
           );
         } else if (label == 'Profile') {
