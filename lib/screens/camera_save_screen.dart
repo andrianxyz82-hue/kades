@@ -295,19 +295,26 @@ class _CameraSaveScreenState extends State<CameraSaveScreen> with WidgetsBinding
         Expanded(
           child: Container(
             margin: const EdgeInsets.all(20),
+            width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.grey[800],
               borderRadius: BorderRadius.circular(20),
-              image: _capturedImage != null
-                  ? DecorationImage(
-                      image: FileImage(File(_capturedImage!.path)),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
             ),
-            child: _capturedImage == null
-                ? const Center(child: Text('No image captured', style: TextStyle(color: Colors.white)))
-                : null,
+            child: _capturedImage != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.file(
+                      File(_capturedImage!.path),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
+                  )
+                : const Center(
+                    child: Text(
+                      'No image captured',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
           ),
         ),
         Padding(
